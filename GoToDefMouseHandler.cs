@@ -42,6 +42,7 @@ namespace GoToDef
         }
 
         bool _enabled = false;
+		bool _shiftEnabled = false;
 
         internal bool Enabled
         {
@@ -67,7 +68,32 @@ namespace GoToDef
             }
         }
 
+        internal bool ShiftDown
+        {
+            get
+            {
+                // Check and see if shift is down but we missed it somehow.
+                bool shiftDown = (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
+                if (shiftDown != _shiftEnabled)
+                    ShiftDown = shiftDown;
+
+                return _shiftEnabled;
+            }
+            set
+            {
+                bool oldVal = _shiftEnabled;
+                _shiftEnabled = value;
+                if (oldVal != _shiftEnabled)
+                {
+                    var temp = ShiftKeyStateChanged;
+                    if (temp != null)
+                        temp(this, new EventArgs());
+                }
+            }
+        }
+
         internal event EventHandler<EventArgs> CtrlKeyStateChanged;
+        internal event EventHandler<EventArgs> ShiftKeyStateChanged;
     }
 
     /// <summary>
@@ -231,7 +257,15 @@ namespace GoToDef
 
                     this.SetHighlightSpan(null);
                     _view.Selection.Clear();
-                    this.DispatchGoToDef();
+                    bool peekOnShift = true;
+                    // Check if shift is down, and if should be peaking on shift, to decide which dispatch to invoke.
+                    if (_state.ShiftDown ^ peekOnShift) {
+                        this.DispatchGoToDef();
+                    }
+                    else
+                    {
+                        this.DispatchPeekDef();
+                    }
 
                     e.Handled = true;
                 }
@@ -339,19 +373,20 @@ namespace GoToDef
 
         bool DispatchGoToDef()
         {
-            Guid cmdGroup;
-            uint cmd;
-            bool usePeek = true;
-            if (usePeek)
-            {
-                cmdGroup = Microsoft.VisualStudio.VSConstants.CMDSETID.StandardCommandSet12_guid;
-                cmd = (uint)VSConstants.VSStd12CmdID.PeekDefinition;
-            }
-            else
-            {
-                cmdGroup = VSConstants.CMDSETID.StandardCommandSet97_guid;
-                cmd = (uint)VSConstants.VSStd97CmdID.GotoDefn;
-            }
+            Guid cmdGroup = VSConstants.GUID_VSStandardCommandSet97;
+            uint cmd = (uint)VSConstants.VSStd97CmdID.GotoDefn;
+            return Dispatch(ref cmdGroup, cmd);
+        }
+
+        bool DispatchPeekDef()
+        {
+            Guid cmdGroup = Microsoft.VisualStudio.VSConstants.CMDSETID.StandardCommandSet12_guid;
+            uint cmd = (uint)VSConstants.VSStd12CmdID.PeekDefinition;
+            return Dispatch(ref cmdGroup, cmd);
+        }
+
+        private bool Dispatch(ref Guid cmdGroup, uint cmd)
+        {
             int hr = _commandTarget.Exec(ref cmdGroup,
                                          cmd,
                                          (uint)OLECMDEXECOPT.OLECMDEXECOPT_DODEFAULT,
