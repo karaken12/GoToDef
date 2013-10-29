@@ -339,9 +339,21 @@ namespace GoToDef
 
         bool DispatchGoToDef()
         {
-            Guid cmdGroup = VSConstants.GUID_VSStandardCommandSet97;
+            Guid cmdGroup;
+            uint cmd;
+            bool usePeek = true;
+            if (usePeek)
+            {
+                cmdGroup = Microsoft.VisualStudio.VSConstants.CMDSETID.StandardCommandSet12_guid;
+                cmd = (uint)VSConstants.VSStd12CmdID.PeekDefinition;
+            }
+            else
+            {
+                cmdGroup = VSConstants.CMDSETID.StandardCommandSet97_guid;
+                cmd = (uint)VSConstants.VSStd97CmdID.GotoDefn;
+            }
             int hr = _commandTarget.Exec(ref cmdGroup,
-                                         (uint)VSConstants.VSStd97CmdID.GotoDefn,
+                                         cmd,
                                          (uint)OLECMDEXECOPT.OLECMDEXECOPT_DODEFAULT,
                                          System.IntPtr.Zero,
                                          System.IntPtr.Zero);
