@@ -1,3 +1,10 @@
+Altering extension to use new Visual Studio 2013 "Peek" functionality instead of "Go To Definition".
+Most changes are just to make it work with VS2013.
+
+The ultimate aim is to give it an option page and get this pulled back upstream.
+
+---
+
 An editor extension for Visual Studio 2010 (Beta1) that allows the user to hold down the control key + click to invoke the *Go To Definition* command.
 
 All code is released under the [Ms-PL license](http://www.opensource.org/licenses/ms-pl.html).
